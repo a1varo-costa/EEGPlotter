@@ -1,6 +1,6 @@
 import numpy as np
 
-def fft_util(x, y, d=None):
+def fftUtil(x, y, d=None):
     ''' Perform FFT in input data '''
 
     if d is None:
@@ -21,7 +21,7 @@ def fft_util(x, y, d=None):
    
     return x, y
 
-def low_pass(sig, fs, fc):
+def lowPass(sig, fs, fc):
     ''' Perform a one pole low pass filter '''
     
     time_const = 1./(2*np.pi*fc)
@@ -36,7 +36,7 @@ def low_pass(sig, fs, fc):
         
     return y
 
-def high_pass(sig, fs, fc):
+def highPass(sig, fs, fc):
     ''' Perform a one pole high pass filter '''
 
     time_const = 1./(2*np.pi*fc + 10e-20)
