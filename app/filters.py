@@ -50,3 +50,32 @@ def high_pass(sig, fs, fc):
         y[k] = alpha * (y[k-1] + sig[k] - sig[k-1])
         
     return y
+
+def butterworth(sig, fs, fc, order, fopt='l', dofft=False):
+    ''' Perform Butterworth Low Pass Filter '''
+    N = len(sig)
+    if dofft:
+        sig = np.fft.rfft(sig) / N 
+
+    if fc > 0:
+        nbins = N/2
+        binwidth = fs / N
+        exp = 2 * order
+    
+        if fopt == 'l': 
+            for i in range(1, N/2 + 1):
+                binfrq = binwidth * i
+                gain = 1. / np.sqrt(1 + ((binfrq / float(fc)) ** exp))
+
+                sig[i] *= gain
+                sig[-(i+1)] *= gain
+       
+        elif fopt == 'h':
+            for i in range(1, N/2 + 1):
+                binfrq = binwidth * i
+                gain = 1. / np.sqrt(1 + ((binfrq / float(fc)) ** -exp))
+
+                sig[i] *= gain
+                sig[-(i+1)] *= gain
+        
+    return np.fft.ifft(sig)
