@@ -1,6 +1,6 @@
 import numpy as np
 
-def fft_util(x, y, d=None):
+def fftUtil(x, y, d=None):
     ''' Perform FFT in input data '''
 
     if d is None:
@@ -21,7 +21,7 @@ def fft_util(x, y, d=None):
    
     return x, y
 
-def low_pass(sig, fs, fc):
+def lowPass(sig, fs, fc):
     ''' Perform a one pole low pass filter '''
     
     time_const = 1./(2*np.pi*fc)
@@ -36,7 +36,7 @@ def low_pass(sig, fs, fc):
         
     return y
 
-def high_pass(sig, fs, fc):
+def highPass(sig, fs, fc):
     ''' Perform a one pole high pass filter '''
 
     time_const = 1./(2*np.pi*fc + 10e-20)
@@ -53,6 +53,7 @@ def high_pass(sig, fs, fc):
 
 def butterworth(sig, fs, fc, order, fopt='l', dofft=False):
     ''' Perform Butterworth Low Pass Filter '''
+
     N = len(sig)
     if dofft:
         sig = np.fft.rfft(sig) / N 
@@ -63,7 +64,7 @@ def butterworth(sig, fs, fc, order, fopt='l', dofft=False):
         exp = 2 * order
     
         if fopt == 'l': 
-            for i in range(1, N/2 + 1):
+            for i in range(0, N//2 + 1):
                 binfrq = binwidth * i
                 gain = 1. / np.sqrt(1 + ((binfrq / float(fc)) ** exp))
 
@@ -71,11 +72,11 @@ def butterworth(sig, fs, fc, order, fopt='l', dofft=False):
                 sig[-(i+1)] *= gain
        
         elif fopt == 'h':
-            for i in range(1, N/2 + 1):
+            for i in range(1, N//2 + 1):
                 binfrq = binwidth * i
                 gain = 1. / np.sqrt(1 + ((binfrq / float(fc)) ** -exp))
 
                 sig[i] *= gain
                 sig[-(i+1)] *= gain
         
-    return np.fft.ifft(sig)
+    return np.fft.irfft(sig)*N
