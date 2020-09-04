@@ -18,7 +18,7 @@ class Plotter(object):
         self.curveFFT = self.pltFFT.plot()
 
         self.filterOpt = ''
-        self.lpfCutoff = 99999.99
+        self.lpfCutoff = f/2 - 0.01
         self.hpfCutoff = 0.000001
         self.samplingFreq = f
 
@@ -35,23 +35,32 @@ class Plotter(object):
 
     def _update(self):
         if self.filterOpt == 'Low Pass':
-            y = filters.lowPass(self.stream.buf, 
-                                self.samplingFreq,
-                                self.lpfCutoff)
-            self.curveFilter.setData(y)
+            filtered = filters.butterworth(self.stream.buf, 
+                                    self.samplingFreq, 
+                                    self.lpfCutoff, 1)
+
+            x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
+                                   filtered, 
+                                   1/self.samplingFreq)
+            self.curveFilter.setData(filtered)
 
         elif self.filterOpt == 'High Pass':
-            y = filters.highPass(self.stream.buf, 
-                                 self.samplingFreq,
-                                 self.hpfCutoff)
-            self.curveFilter.setData(y)
+            filtered = filters.butterworth(self.stream.buf, 
+                                           self.samplingFreq, 
+                                           self.hpfCutoff, 1, 'hp')
 
-        else:
+            x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
+                                   filtered, 
+                                   1/self.samplingFreq)
+            self.curveFilter.setData(filtered)
+
+        else:   
+            x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
+                                   self.stream.buf, 
+                                   1/self.samplingFreq)
             self.curveFilter.setData(self.stream.buf)
         
-        x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
-                               self.stream.buf, 
-                               1/self.samplingFreq)
+        y[0] = 0; # remove 0Hz bin
         self.curveFFT.setData(x, y)
     
     def _onCBoxTextChanged(self, t):
@@ -66,16 +75,16 @@ class Plotter(object):
         else:
             self.ui.cutoffSpinBox.setValue(0.0)
         
-        print('Selected filter => %s' % t)
+        #print('Selected filter => %s' % t)
 
     def _onSBoxValueChanged(self, d):
         if self.filterOpt == 'Low Pass':
             self.lpfCutoff = d
-            print('LPF Cut-Off = %f' % self.lpfCutoff)
+            #print('LPF Cut-Off = %f' % self.lpfCutoff)
         
         elif self.filterOpt == 'High Pass':
             self.hpfCutoff = d
-            print('HPF Cut-Off = %f' % self.hpfCutoff)
+            #print('HPF Cut-Off = %f' % self.hpfCutoff)
     
     def _connectSlots(self):
         self.ui.filterComboBox.\
