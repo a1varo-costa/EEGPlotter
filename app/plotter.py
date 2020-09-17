@@ -1,6 +1,7 @@
-from . import filters
+from . import filters, average
 
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from pyqtgraph import mkPen
 
 import numpy as np
 
@@ -12,11 +13,15 @@ class Plotter(object):
         self.stream = stream
 
         self.pltFilter = self.ui.plotWidget.addPlot(row=0, col=0)
-        self.pltFFT = self.ui.plotWidget.addPlot(row=1, col=0)
+        self.pltFFT    = self.ui.plotWidget.addPlot(row=1, col=0)
         
-        self.curveFilter = self.pltFilter.plot()
-        self.curveFFT = self.pltFFT.plot()
+        self.curveFilter  = self.pltFilter.plot()
+        self.curveAverage = self.pltFilter.plot()
+        self.curveFFT     = self.pltFFT.plot()
 
+        self.avrg = average.Averager(self.stream.buf_max_size, 5)
+        self._penAvrg = mkPen('r') # red pen
+        
         self.filterOpt = ''
         self.lpfCutoff = f/2 - 0.01
         self.hpfCutoff = 0.000001
@@ -36,29 +41,33 @@ class Plotter(object):
     def _update(self):
         if self.filterOpt == 'Low Pass':
             filtered = filters.butterworth(self.stream.buf, 
-                                    self.samplingFreq, 
-                                    self.lpfCutoff, 1)
+                                           self.samplingFreq, 
+                                           self.lpfCutoff, 2)
 
             x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
                                    filtered, 
                                    1/self.samplingFreq)
+
             self.curveFilter.setData(filtered)
+            self.curveAverage.setData(self.avrg.calc(filtered), pen=self._penAvrg)
 
         elif self.filterOpt == 'High Pass':
             filtered = filters.butterworth(self.stream.buf, 
                                            self.samplingFreq, 
-                                           self.hpfCutoff, 1, 'hp')
+                                           self.hpfCutoff, 2, 'hp')
 
             x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
                                    filtered, 
                                    1/self.samplingFreq)
             self.curveFilter.setData(filtered)
+            self.curveAverage.setData(self.avrg.calc(filtered), pen=self._penAvrg)
 
         else:   
             x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
                                    self.stream.buf, 
                                    1/self.samplingFreq)
             self.curveFilter.setData(self.stream.buf)
+            self.curveAverage.setData(self.avrg.calc(self.stream.buf), pen=self._penAvrg)
         
         y[0] = 0; # remove 0Hz bin
         self.curveFFT.setData(x, y)
