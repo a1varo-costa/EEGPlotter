@@ -1,5 +1,5 @@
-from .ui import mainWindowUI as mainWinUI
-from .   import plotter, rect
+from .uigen import mainWindowUI as mainWinUI
+from .      import plotter, rect
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QLabel, QSizePolicy
 
