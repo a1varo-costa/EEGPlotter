@@ -1,6 +1,6 @@
-from . import filters, average
+from .processing import filters, average
 
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph import mkPen
 
 import numpy as np
@@ -9,7 +9,7 @@ import numpy as np
 class Plotter(object):
     def __init__(self, ui, stream, f):
         super().__init__()
-        self.ui = ui
+        self.ui     = ui
         self.stream = stream
 
         self.pltFilter = self.ui.plotWidget.addPlot(row=0, col=0)
@@ -19,12 +19,16 @@ class Plotter(object):
         self.curveAverage = self.pltFilter.plot()
         self.curveFFT     = self.pltFFT.plot()
 
-        self.avrg = average.Averager(self.stream.buf_max_size, 5)
-        self._penAvrg = mkPen('r') # red pen
+        if self.stream is not None:
+            self.avrg = average.Averager(self.stream.buf_max_size, 5)
+            self._penAvrg = mkPen('r') # red pen
         
-        self.filterOpt = ''
-        self.lpfCutoff = f/2 - 0.01
-        self.hpfCutoff = 0.000001
+        self.doFilter     = False
+        self.ui.cutoffLowSpinBox.setEnabled(False)
+        self.ui.cutoffHighSpinBox.setEnabled(False)
+
+        self.lowCutoff    = f/2 - 0.01
+        self.highCutoff   = 0.000001
         self.samplingFreq = f
 
         self._connectSlots()
@@ -36,67 +40,50 @@ class Plotter(object):
             self.timer.timeout.connect(self._update)
             self.stream.open()
             self.timer.start(0)
-        print('>> Plotting...\n')
+            print('>> Plotting...\n')
 
     def _update(self):
-        if self.filterOpt == 'Low Pass':
-            filtered = filters.butterworth(self.stream.buf, 
-                                           self.samplingFreq, 
-                                           self.lpfCutoff, 2)
+        filtered = filters.butterworth(self.stream.buf, 
+                                       self.samplingFreq, 
+                                       (self.lowCutoff, self.highCutoff),
+                                       2,
+                                       fopt='bandpass')
 
-            x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
-                                   filtered, 
-                                   1/self.samplingFreq)
+        x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
+                               filtered, 
+                               1/self.samplingFreq)
 
-            self.curveFilter.setData(filtered)
-            self.curveAverage.setData(self.avrg.calc(filtered), pen=self._penAvrg)
-
-        elif self.filterOpt == 'High Pass':
-            filtered = filters.butterworth(self.stream.buf, 
-                                           self.samplingFreq, 
-                                           self.hpfCutoff, 2, 'hp')
-
-            x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
-                                   filtered, 
-                                   1/self.samplingFreq)
-            self.curveFilter.setData(filtered)
-            self.curveAverage.setData(self.avrg.calc(filtered), pen=self._penAvrg)
-
-        else:   
-            x, y = filters.fftUtil(np.arange(self.stream.buf_max_size), 
-                                   self.stream.buf, 
-                                   1/self.samplingFreq)
-            self.curveFilter.setData(self.stream.buf)
-            self.curveAverage.setData(self.avrg.calc(self.stream.buf), pen=self._penAvrg)
-        
+        self.curveFilter.setData(filtered)
+        self.curveAverage.setData(self.avrg.calc(filtered), pen=self._penAvrg)
+     
         y[0] = 0; # remove 0Hz bin
         self.curveFFT.setData(x, y)
     
-    def _onCBoxTextChanged(self, t):
-        self.filterOpt = t
-        
-        if self.filterOpt == 'Low Pass':
-            self.ui.cutoffSpinBox.setValue(self.lpfCutoff)
-        
-        elif self.filterOpt == 'High Pass':
-            self.ui.cutoffSpinBox.setValue(self.hpfCutoff)
+    def _onCheckBoxStateChanged(self, state):
+        if state == QtCore.Qt.Checked:
+            self.doFilter = True
+            self.ui.cutoffLowSpinBox.setValue(self.lowCutoff)
+            self.ui.cutoffLowSpinBox.setEnabled(True)
+            self.ui.cutoffHighSpinBox.setValue(self.highCutoff)
+            self.ui.cutoffHighSpinBox.setEnabled(True)
         
         else:
-            self.ui.cutoffSpinBox.setValue(0.0)
-        
-        #print('Selected filter => %s' % t)
+            self.doFilter = False
+            self.ui.cutoffLowSpinBox.setEnabled(False)
+            self.ui.cutoffHighSpinBox.setEnabled(False)
 
-    def _onSBoxValueChanged(self, d):
-        if self.filterOpt == 'Low Pass':
-            self.lpfCutoff = d
-            #print('LPF Cut-Off = %f' % self.lpfCutoff)
-        
-        elif self.filterOpt == 'High Pass':
-            self.hpfCutoff = d
-            #print('HPF Cut-Off = %f' % self.hpfCutoff)
+    def _onLowSpinBoxValueChanged(self, d):
+        self.lowCutoff = d
     
+    def _onHighSpinBoxValueChanged(self, d):
+        self.highCutoff = d
+
     def _connectSlots(self):
-        self.ui.filterComboBox.\
-            currentTextChanged.connect(self._onCBoxTextChanged)
-        self.ui.cutoffSpinBox.\
-            valueChanged.connect(self._onSBoxValueChanged)
+        self.ui.filterCheckBox.\
+            stateChanged.connect(self._onCheckBoxStateChanged)
+        
+        self.ui.cutoffLowSpinBox.\
+            valueChanged.connect(self._onLowSpinBoxValueChanged)
+
+        self.ui.cutoffHighSpinBox.\
+            valueChanged.connect(self._onHighSpinBoxValueChanged)

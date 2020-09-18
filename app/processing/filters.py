@@ -23,14 +23,29 @@ def fftUtil(x, y, d=None):
     return x, y
 
 def butterworth(sig, fs, fc, order, fopt='low'):
-    ''' Perform Butterworth Low/High Pass Filter '''
-    
-    if (fc > 0 and fc <= fs/2):
-        
-        fc = fc/(fs/2) # normalize fc
+    ''' Perform Butterworth Low/High/Band Pass Filter '''
+
+    if (__validCutoff(fs, fc)):
+        fc = __normalize(fc, fs/2) # normalize fc
         b, a = signal.butter(order, fc, fopt)
         out = signal.filtfilt(b, a, sig)
         return out
         
     else:
         return sig
+
+def __validCutoff(fs, fc):
+    try:
+        isValid = True
+        for i in fc:
+            isValid = isValid and (i > 0 and i <= fs/2)
+        return isValid
+    except:
+        return fc > 0 and fc <= fs/2
+
+def __normalize(a, b):
+    try:
+        a = [x/b for x in a]
+        return a
+    except:
+        return a/b
