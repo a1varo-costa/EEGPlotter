@@ -34,58 +34,40 @@
            <item>
             <layout class="QHBoxLayout" name="filterHLayout">
              <item>
-              <widget class="QLabel" name="selectFilterLabel">
+              <widget class="QLabel" name="cutoffLowLabel">
                <property name="text">
-                <string>Select Filter</string>
+                <string>Low Cut-Off</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QComboBox" name="filterComboBox">
-               <item>
-                <property name="text">
-                 <string>None</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Low Pass</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>High Pass</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-             <item>
-              <spacer name="filterFxHSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="cutoffLabel">
-               <property name="text">
-                <string>Cut-Off</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="cutoffSpinBox">
+              <widget class="QDoubleSpinBox" name="cutoffLowSpinBox">
                <property name="maximum">
                 <double>99999.990000000005239</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="cutoffHighLabel">
+               <property name="text">
+                <string>High Cut-Off</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="cutoffHighSpinBox">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="maximum">
+                <double>99999.990000000005239</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="filterCheckBox">
+               <property name="text">
+                <string>FILTER</string>
                </property>
               </widget>
              </item>

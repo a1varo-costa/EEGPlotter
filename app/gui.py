@@ -23,11 +23,11 @@ class MainUI(QMainWindow):
         self.rectGridLayout = QGridLayout(self.ui.keyboardWidget)
 
         for setting in self.settings:
-            self.rectGridLayout.addWidget(rect.BlinkRect(label=setting[0],  
-                                                         freq =setting[1]), 
-                                          setting[2], setting[3])
+            blkrect = rect.BlinkRect(label=setting[0], freq=setting[1])
+            self.rectGridLayout.addWidget(blkrect, setting[2], setting[3])
 
     def closeEvent(self, evt):
-        self.stream.close()
+        if self.stream is not None:
+            self.stream.close()
         super().closeEvent(evt)
 
