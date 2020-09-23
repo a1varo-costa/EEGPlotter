@@ -28,7 +28,7 @@ def butterworth(sig, fs, fc, order, fopt='low'):
     if (__validCutoff(fs, fc)):
         fc = __normalize(fc, fs/2) # normalize fc
         b, a = signal.butter(order, fc, fopt)
-        out = signal.filtfilt(b, a, sig)
+        out = signal.lfilter(b, a, sig)
         return out
         
     else:
